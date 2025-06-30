@@ -2,7 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import LoanRouter from './routes/Loan.routes';  
-
+import incomingRequestsMiddleware from './middlewares/incoming_requests.middleware';
 dotenv.config();
 
 
@@ -20,6 +20,6 @@ App.get('/health-check', (req, res) => {
     res.send('Hello World!');
 });
 
-App.use('/api/loan',LoanRouter);
+App.use('/api/loan',incomingRequestsMiddleware,LoanRouter);
 
 
