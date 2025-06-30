@@ -4,6 +4,7 @@
    "paths": {
       "@/*": ["./*"],
       "@workspace/db": ["../../packages/db/src"],
+      "@workspace/redis": ["../../packages/redis/src"],
       
     },
     "module": "NodeNext",

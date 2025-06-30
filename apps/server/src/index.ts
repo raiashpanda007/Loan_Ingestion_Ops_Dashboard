@@ -1,13 +1,14 @@
 import cluster from 'cluster';
 import os from 'os';
 import { App } from './bin';
-
+import dotenv from 'dotenv';
+dotenv.config();
 
 
 const PORT = process.env.PORT || 3001;
 
-// Right now using half of the cpu cores for the server
-const cpus = os.cpus().length/2; 
+// Right now I am using half of the cpu cores for the server can be adjusted later 
+const cpus = Math.floor(os.cpus().length/2); 
 
 
 if(cluster.isPrimary) {
