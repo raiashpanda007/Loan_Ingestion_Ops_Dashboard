@@ -1,11 +1,11 @@
 import cluster from 'cluster';
 import os from 'os';
 import { App } from './bin';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv-flow';
 dotenv.config();
 
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.SERVER_PORT || 3001;
 
 // Right now I am using half of the cpu cores for the server can be adjusted later 
 const cpus = Math.floor(os.cpus().length/2); 
