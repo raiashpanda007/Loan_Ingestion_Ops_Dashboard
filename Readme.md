@@ -16,10 +16,6 @@ apps/
 ├── worker/ # Worker service (validation, DB write, WebSocket emit)
 ├── web/ # Realtime frontend dashboard (Next.js)
 
-yaml
-Copy
-Edit
-
 ---
 
 ## 📦 Tech Stack
