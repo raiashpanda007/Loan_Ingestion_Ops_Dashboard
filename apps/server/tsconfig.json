@@ -1,0 +1,14 @@
+{
+  "extends": "@workspace/typescript-config/base.json",
+  "compilerOptions": {
+   "paths": {
+      "@/*": ["./*"],
+      "@workspace/db": ["../../packages/db/src"],
+      
+    },
+    "module": "NodeNext",
+    "outDir": "./dist",
+  },
+  "exclude": ["node_modules"],
+  "include": ["."]
+}

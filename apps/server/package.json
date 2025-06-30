@@ -1,0 +1,23 @@
+{
+  "name": "apiserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tsbuild": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js ",
+    "dev": "node dist/index.js",
+    "start": "pnpm tsbuild && pnpm dev",
+    "build": "pnpm tsbuild && pnpm dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "esbuild": "^0.25.5",
+    "express": "^5.1.0"
+  }
+}
