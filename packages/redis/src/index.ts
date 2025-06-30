@@ -1,4 +1,5 @@
 import * as queue from './queue';
-import * as redisClient from './redis';
+import {redisConnectionConfig} from './redis';
+import client from './redis'
 
-export { queue, redisClient };
+export { queue,client,redisConnectionConfig}

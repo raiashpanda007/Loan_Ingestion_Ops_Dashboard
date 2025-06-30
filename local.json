@@ -1,0 +1,14 @@
+{
+  "loanId": "loan-1234",
+  "application": {
+    "name": "Ashwin Rai",
+    "age": 22,
+    "email": "ashwin@example.com",
+    "phone": "9876543210"
+  },
+  "amount": 40000,
+  "income": 10000,
+  "creditScore": 720,
+  "purpose": "education"
+}
+

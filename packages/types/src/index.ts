@@ -13,5 +13,5 @@ export const LoanRequestSchema = zod.object({
     income: zod.number().min(0, "Income must be a positive number"),
     creditScore: zod.number().min(300, "Credit score must be at least 300"),
     purpose: zod.string().min(1, "Purpose is required"),
-    status: zod.enum(["APPROVED", "REJECTED", "PENDING"]).default("PENDING"),
+    // status: zod.enum(["APPROVED", "REJECTED", "PENDING"]).default("PENDING"),
 });

@@ -3,6 +3,7 @@ import {queue} from "@workspace/redis"
 import dotenv from 'dotenv-flow'; 
 dotenv.config(); 
 const LoansRequestController = asyncHandler(async (req,res) =>{
+    console.log("Received loan request:", req.body);
     const LOAN_QUEUE = queue.LOAN_QUEUE;
     const body = req.body;
 
@@ -19,6 +20,7 @@ const LoansRequestController = asyncHandler(async (req,res) =>{
         removeOnComplete: true,
         removeOnFail: true,
     });
+    console.log("Queued job:", queued.id);
 
     if (!queued) {
         return res.status(500).json(new Response(500, "Internal Server Error", "Failed to queue loan request"));
