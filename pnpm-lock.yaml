@@ -151,6 +151,24 @@ importers:
         specifier: ^5.6.1
         version: 5.6.1
 
+  packages/redis:
+    dependencies:
+      bullmq:
+        specifier: ^5.56.0
+        version: 5.56.0
+      dotenv:
+        specifier: ^17.0.0
+        version: 17.0.0
+      ioredis:
+        specifier: ^5.6.1
+        version: 5.6.1
+
+  packages/types:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+
   packages/typescript-config: {}
 
   packages/ui:

@@ -13,43 +13,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Loan {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  loanId       String         @unique
-  applicant    ApplicantInfo
-  amount       Float
-  income       Float
-  creditScore  Int
-  purpose      String
-  status       LoanStatus
-  enrichedAt   DateTime       @default(now())
-  createdAt    DateTime       @default(now())
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  loanId      String        @unique
+  applicant   ApplicantInfo
+  amount      Float
+  income      Float
+  creditScore Int
+  purpose     String
+  status      LoanStatus
+  enrichedAt  DateTime      @default(now())
+  createdAt   DateTime      @default(now())
 }
 
 model FailedLoan {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  loanId       String
-  applicant    ApplicantInfo
-  amount       Float
-  income       Float
-  creditScore  Int
-  purpose      String
-  errors       String[]       // e.g. ["missing_email", "invalid_score"]
-  flagged      Boolean        @default(false)
-  flaggedNote  String?        // Optional message by reviewer/admin
-  failedAt     DateTime       @default(now())
-  retried      Boolean        @default(false)
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  loanId      String
+  applicant   ApplicantInfo
+  amount      Float
+  income      Float
+  creditScore Int
+  purpose     String
+  errors      String[] // e.g. ["missing_email", "invalid_score"]
+  flagged     Boolean       @default(false)
+  flaggedNote String? // Optional message by reviewer/admin
+  failedAt    DateTime      @default(now())
+  retried     Boolean       @default(false)
 }
 
 type ApplicantInfo {
-  name     String
-  age      Int
-  email    String
-  phone    String
+  name  String
+  age   Int
+  email String
+  phone String
 }
 
 enum LoanStatus {
   APPROVED
   REJECTED
+  PENDING
 }
