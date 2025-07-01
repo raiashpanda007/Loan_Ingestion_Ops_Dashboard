@@ -20,7 +20,7 @@ This is a full-stack, distributed system built as a solution for **CreditSea's F
 - WebSocket-powered live dashboard
 - Auto-scaling Redis-based workers
 - MongoDB batch persistence using cron jobs
-- Retry and pause/resume mechanisms
+- Pause/resume ingestion mechanism
 - Load-tested with `autocannon` and `artillery`
 
 ---
@@ -28,18 +28,21 @@ This is a full-stack, distributed system built as a solution for **CreditSea's F
 ## 🧱 Architecture (TurboRepo Monorepo)
 
 apps/
-├── api/ → REST ingestion API
-├── worker/ → Validation + enrichment logic (Redis + Mongo + WS)
-├── web/ → Realtime frontend dashboard (Next.js)
+├── api/ # REST ingestion API
+├── worker/ # Validation + enrichment logic (Redis + Mongo + WS)
+├── cron/ # MongoDB batch persistence jobs
+├── web/ # Realtime frontend dashboard (Next.js)
 
-
+yaml
+Copy
+Edit
 
 ---
 
 ## 🧠 System Design
 
 ### 1. `apps/api` – Ingestion API (Express)
-- `POST /api/loan/request`: Accepts one loan request at a time
+- `POST /api/loans/request`: Accepts one loan request at a time
 - Minimal validation, then pushes job into Redis queue
 - Supports **pause/resume ingestion** via Redis flag
 
@@ -55,39 +58,38 @@ apps/
   - `success`, `error`, and system stats
 
 ### 3. MongoDB Persistence (via Cron Job)
-- Batch inserts from Redis every few minutes
-- Accepted → `Loan` collection
-- Failed → `FailedLoan` & `LoanError` collections (1:n)
+- Cron service scans Redis and pushes:
+  - Valid → `Loan` collection
+  - Failed → `FailedLoan` + `LoanError` collections (1:n mapping)
+- Keeps Redis lean for high-throughput ingestion
 
 ### 4. WebSocket + Live Ops Dashboard
-- WebSocket server emits:
-  - Ingestion rate, error types, job success/fail count
-- Frontend dashboard (`apps/web`) shows:
-  - 📊 Live line charts (Recharts)
-  - 📋 Error logs (filterable, retryable)
-  - ⏸ Pause/Resume toggle
-  - 🔁 Retry API to resubmit failed requests
+- Real-time stats pushed from worker via `ws`
+- Frontend dashboard shows:
+  - 📊 Ingestion & processing rate charts (Recharts)
+  - 📋 Error logs (filterable)
+  - ⏸ Pause/resume toggle for API ingestion
 
 ---
 
 ## ⚙️ Tech Stack
 
-| Layer         | Tech Used                       | Reason                                       |
-|---------------|----------------------------------|----------------------------------------------|
-| API Server    | Node.js + Express + Redis        | Low-latency ingestion                        |
-| Worker Engine | Node.js + BullMQ                 | Scalable async job queue                     |
-| Persistence   | MongoDB (via cron jobs)          | Fast writes with bulk insert                 |
-| Frontend      | Next.js + Tailwind + Recharts    | Full-stack rendering, realtime UI            |
-| Realtime Comm | WebSocket (`ws` package)         | Instant frontend updates                     |
-| Infra         | TurboRepo                        | Fast monorepo DX with caching & sharing      |
+| Layer         | Tech Used                       | Why?                                          |
+|---------------|----------------------------------|-----------------------------------------------|
+| API Server    | Node.js + Express + Redis        | Low-latency ingestion                          |
+| Queue         | Redis + BullMQ                   | Fast, async, auto-scalable jobs               |
+| Persistence   | MongoDB (via cron jobs)          | Long-term storage, analytics ready            |
+| Frontend      | Next.js + Tailwind + Recharts    | Realtime UI with charts + error logs          |
+| Realtime Comm | WebSocket (`ws`)                 | Live push updates to UI                       |
+| Monorepo Tool | TurboRepo                        | Shared cache + isolated build pipelines       |
 
 ---
 
 ## 🚦 API Overview
 
-### ➤ Loan Request
+### ➤ Loan Ingestion
 ```http
-POST /api/loan/request
+POST /api/loans/request
 Content-Type: application/json
 
 {
@@ -103,49 +105,74 @@ Content-Type: application/json
   "creditScore": 550,
   "purpose": "Startup funding"
 }
-➤ Retry Failed Loans
-
-POST /api/loan/request
 ➤ Fetch Error Logs
-
+http
+Copy
+Edit
 GET /api/loans/errors?errorId=<error_id>&loanId=<loanId>&from=2025-06-30&to=2025-07-01
-🚀 Load Test Metrics
-Tool: autocannon
+📈 Load Testing Metrics
+Metric	Result
+Tool Used	autocannon
+Concurrency	50 clients
+Simulated RPS	2000+ req/sec
+Avg Latency	~30ms
+Peak RPS	~1800 requests/sec
+Error Rate	< 1% (filtered via logic)
+Uptime	No drops even at peak throughput
 
-Concurrency: 50 clients
+🧠 Dev Notes
+Built-in exactly-once semantics using job.id deduplication
 
-Simulated Load: 2000+ req/sec
+Redis used for high-speed ingestion + ephemeral data
 
-Avg Latency: ~30ms
+MongoDB used only via cron to persist after processing
 
-Peak RPS: ~2000
+Web frontend handles WS disconnect + retry gracefully
 
-Error Rate: < 1%
+Infra ready to scale horizontally (workers, dashboard)
 
-Throughput: Consistent 1.5k–2k req/sec across duration
+🛠 Setup Instructions
+Prerequisites
+Node.js v18+
 
-🧠 Advanced Notes
-Built-in exactly-once semantics by using job.id as deduplication key
+Redis (locally or remote)
 
-Redis used for fast ingestion and short-term job state
+MongoDB (prefer Atlas, not local Mongo — index issues on local)
 
-MongoDB used for long-term analytics
+Install
 
-Frontend handles WS disconnects and automatically retries
+pnpm install
+Build Each App (individually)
 
-Workers publish their status, allowing future scale to K8s or ECS
+cd apps/api && pnpm tsbuild
+cd apps/worker && pnpm tsbuild
+cd apps/cron && pnpm tsbuild
+cd apps/web && pnpm tsbuild
+Run All Services
 
-📂 Remaining Enhancements (Optional)
-Add authentication (JWT or session)
+pnpm dev
+🌱 Environment Setup
+Create a .env file in the root, based on .env.example:
 
-Introduce Redis TTLs and DLQs (dead-letter queues)
 
-CI/CD pipeline (GitHub Actions + Docker + Railway/Vercel)
+REDIS_URL=redis://localhost:6379
+MONGO_URL=mongodb+srv://<your-mongodb-atlas-uri>
+PORT=3000
+WS_PORT=8080
+WS_URL=ws://localhost:8080
+...
+📂 Future Enhancements (Optional)
+Authentication layer (JWT/session)
 
-Alerting system for error spikes (email/webhook)
+Redis TTL & DLQ (dead-letter queues)
 
-GraphQL API (stretch)
+GitHub Actions CI/CD
 
-🙇‍♂️ Author
+Redis alerts (e.g. for error spikes)
+
+GraphQL API layer
+
+🙇 Author
 Ashwin Rai
 Full-stack Developer | IIIT Bhagalpur
+GitHub: raiashpanda007
