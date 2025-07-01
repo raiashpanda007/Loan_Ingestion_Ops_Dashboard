@@ -18,6 +18,6 @@ router.post('/request',incomingRequestsMiddleware, LoansRequestController);
  * @access  Public 
  */
 router.get("/errors", LoansErrorsController);
-router.get("/geterros", LoansErrorsController);
+router.get("/geterrors", LoansErrorsController);
 
 export default router;

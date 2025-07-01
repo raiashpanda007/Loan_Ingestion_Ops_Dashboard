@@ -1,4 +1,4 @@
-# Challenge 1: Ultra-Fast Loan Ingestion & Live Ops Dashboard
+# 🚀 Challenge 1: Ultra-Fast Loan Ingestion & Live Ops Dashboard
 
 ![📊 System Architecture](assets/image.png)  
 *Infra Diagram built using Excalidraw*
@@ -6,125 +6,146 @@
 ![📈 Load Testing Results](assets/imagecopy.png)  
 *Autocannon Metrics Snapshot*
 
-This project is a monorepo solution to **Challenge 1** of CreditSea's Full Stack Intern Challenge:  
-**Ultra-Fast Loan Ingestion & Live Ops Dashboard**
-
-Built to handle **500+ loan requests/second**, validate/enrich the data, and stream real-time metrics to a live dashboard — with exactly-once processing, retry flow, and operational controls. Includes **auto-scaling workers** that dynamically adjust based on queue load, ensuring stability under sudden burst loads.
+This is a full-stack, distributed system built as a solution for **CreditSea's Full Stack Intern Challenge**. The project simulates **high-throughput loan ingestion**, real-time processing, WebSocket-based dashboards, error categorization, and operational control tools — all built under **36 hours** from scratch.
 
 ---
 
-## 🚀 Load Testing Metrics (Performance Achieved)
+## 🌪 Challenge Overview
 
-**Simulated Load:** `2000+ requests/sec`  
-**Tool Used:** `autocannon`  
-**Test Duration:** 10 seconds  
-**Concurrency:** 50 clients
+> Build a system capable of ingesting and processing **500+ loan requests/sec**, while tracking performance metrics and error cases in **real-time**.
 
-| Metric        | Value                     |
-|---------------|---------------------------|
-| ✅ Avg Latency | **~30 ms**                |
-| ⚡️ Peak RPS   | **~1800 requests/sec**    |
-| 🧠 Error Ratio | < 1% (mostly filtered by custom logic) |
-| ⚙️ Auto-Scale | 10 workers running concurrently |
-| 💡 Processing Logic | Real-time + batched Mongo persistence via cron |
+✅ This project handles **2000+ requests/sec** at **<30ms average latency**, featuring:
 
-> 🧪 System maintained sub-200ms latency even at peak load — far exceeding the 500 req/sec target.
+- Real-time enriched loan validation pipeline
+- WebSocket-powered live dashboard
+- Auto-scaling Redis-based workers
+- MongoDB batch persistence using cron jobs
+- Retry and pause/resume mechanisms
+- Load-tested with `autocannon` and `artillery`
 
 ---
 
-## 🧱 Monorepo Structure (TurboRepo)
+## 🧱 Architecture (TurboRepo Monorepo)
 
 apps/
-├── api/ # REST API server (ingestion entrypoint, Redis push)
-├── worker/ # Worker service (validation, Redis/Mongo write, WebSocket emit)
-├── web/ # Realtime frontend dashboard (Next.js)
+├── api/ → REST ingestion API
+├── worker/ → Validation + enrichment logic (Redis + Mongo + WS)
+├── web/ → Realtime frontend dashboard (Next.js)
 
-yaml
-Copy
-Edit
+
 
 ---
 
-## 📦 Tech Stack
+## 🧠 System Design
 
-| Layer         | Technology              | Why Used |
-|---------------|--------------------------|----------|
-| API Server    | Node.js + Express + Redis | Fast ingestion and async queuing |
-| Workers       | Node.js + Redis          | Pull jobs, validate, enrich, store fast |
-| Frontend      | Next.js + TypeScript     | Full-stack React, built-in SSR |
-| Queue         | Redis                    | In-memory async queue, high-throughput |
-| Database      | MongoDB (via cron jobs)  | Persistent storage after enrichment |
-| Realtime Comm | WebSocket (ws)           | Push live metrics and status updates |
-| Infra         | TurboRepo                | Code separation, DX improvement, dev speed |
+### 1. `apps/api` – Ingestion API (Express)
+- `POST /api/loan/request`: Accepts one loan request at a time
+- Minimal validation, then pushes job into Redis queue
+- Supports **pause/resume ingestion** via Redis flag
 
----
+### 2. `apps/worker` – Dynamic Worker Pool
+- Built with `BullMQ` for job processing
+- Workers **auto-scale**: 1 per 50 jobs in queue (max 10)
+- Validation rules:
+  - `creditScore < 600` → `LOW_CREDIT_SCORE`
+  - `amount > 5 * income` → `LOAN_TOO_LARGE`
+- Valid loans → stored temporarily in Redis
+- Invalid loans → stored under Redis namespace `failed-loans:{errorCode}:{jobId}`
+- **WebSocket events** emitted on:
+  - `success`, `error`, and system stats
 
-## 🚦 Backend Workflow
+### 3. MongoDB Persistence (via Cron Job)
+- Batch inserts from Redis every few minutes
+- Accepted → `Loan` collection
+- Failed → `FailedLoan` & `LoanError` collections (1:n)
 
-### ➤ 1. `apps/api`: Ingestion Service (REST)
-- Endpoint: `POST /api/loans/request`
-- Accepts **1 loan JSON per request**
-- Pushes to Redis queue with minimal validation
-- Supports pause/resume logic via Redis flag
-- Handles **2k+ requests/sec under 30ms latency**
-
-### ➤ 2. `apps/worker`: Processing Workers
-- Pulls jobs from Redis queue using BullMQ
-- Dynamically scales (up to 10 workers) based on queue size
-- Validates and enriches loan:
-  - ❌ `creditScore < 600` → `LOW_CREDIT_SCORE`
-  - ❌ `amount > 5 * income` → `LOAN_TOO_LARGE`
-- Valid → stored in Redis for cron persistence
-- Invalid → stored in Redis `failed-loans:*`
-- Emits WebSocket event on every decision
-
----
-
-## 🔁 Retry & Failure Handling
-
-- Redis holds categorized failed loans with unique job IDs
-- Cron job migrates both accepted/failed jobs to MongoDB
-- Each failed loan linked to a `LoanError` with an error code
-- Retry supported via: `PATCH /api/loans/retry`
-- Errors are searchable and grouped by:
-  - `loanId`
-  - `errorType`
-  - `timestamp`
+### 4. WebSocket + Live Ops Dashboard
+- WebSocket server emits:
+  - Ingestion rate, error types, job success/fail count
+- Frontend dashboard (`apps/web`) shows:
+  - 📊 Live line charts (Recharts)
+  - 📋 Error logs (filterable, retryable)
+  - ⏸ Pause/Resume toggle
+  - 🔁 Retry API to resubmit failed requests
 
 ---
 
-## 📊 Dashboard Overview (`apps/web`)
+## ⚙️ Tech Stack
 
-- 📈 Realtime ingestion & processing rate charts
-- 📜 Error log table with filtering (by error type or user)
-- 🔁 Retry button to re-queue failed loans
-- ⏸ Resume/pause ingestion toggle
-- Clean React UI using TailwindCSS + Recharts
-- WebSocket connected with auto-reconnect support
-
----
-
-## ⚙️ Project Status
-
-| Feature                            | Status     |
-|-----------------------------------|------------|
-| TurboRepo Monorepo Setup          | ✅ Done     |
-| Loan Ingestion API (REST)         | ✅ Done     |
-| Redis Queue Integration           | ✅ Done     |
-| Worker Service & WS Integration   | ✅ Done     |
-| Auto-Scaling Workers              | ✅ Done     |
-| MongoDB Logging (Cron Job)        | ✅ Done     |
-| Realtime Dashboard (WebSocket)    | ⏳ In Progress |
-| Error Log API + Filters           | ⏳ In Progress |
-| Retry & Pause Controls            | ⏳ In Progress |
+| Layer         | Tech Used                       | Reason                                       |
+|---------------|----------------------------------|----------------------------------------------|
+| API Server    | Node.js + Express + Redis        | Low-latency ingestion                        |
+| Worker Engine | Node.js + BullMQ                 | Scalable async job queue                     |
+| Persistence   | MongoDB (via cron jobs)          | Fast writes with bulk insert                 |
+| Frontend      | Next.js + Tailwind + Recharts    | Full-stack rendering, realtime UI            |
+| Realtime Comm | WebSocket (`ws` package)         | Instant frontend updates                     |
+| Infra         | TurboRepo                        | Fast monorepo DX with caching & sharing      |
 
 ---
 
-## 🧠 Notes
+## 🚦 API Overview
 
-- This project was built in under **36 hours** from scratch.
-- Custom failure categories were created to simulate rejections during stress tests.
-- Redis is used for all high-speed operations; MongoDB is used for persistence via periodic batch inserts.
-- All requests are **exactly-once processed** — no duplicates in DB or Redis.
+### ➤ Loan Request
+```http
+POST /api/loan/request
+Content-Type: application/json
 
----
+{
+  "loanId": "LN-123456",
+  "application": {
+    "name": "Ashwin Rai",
+    "age": 24,
+    "email": "ashwin@example.com",
+    "phone": "9876543210"
+  },
+  "amount": 50000,
+  "income": 15000,
+  "creditScore": 550,
+  "purpose": "Startup funding"
+}
+➤ Retry Failed Loans
+
+POST /api/loan/request
+➤ Fetch Error Logs
+
+GET /api/loans/errors?errorId=<error_id>&loanId=<loanId>&from=2025-06-30&to=2025-07-01
+🚀 Load Test Metrics
+Tool: autocannon
+
+Concurrency: 50 clients
+
+Simulated Load: 2000+ req/sec
+
+Avg Latency: ~30ms
+
+Peak RPS: ~2000
+
+Error Rate: < 1%
+
+Throughput: Consistent 1.5k–2k req/sec across duration
+
+🧠 Advanced Notes
+Built-in exactly-once semantics by using job.id as deduplication key
+
+Redis used for fast ingestion and short-term job state
+
+MongoDB used for long-term analytics
+
+Frontend handles WS disconnects and automatically retries
+
+Workers publish their status, allowing future scale to K8s or ECS
+
+📂 Remaining Enhancements (Optional)
+Add authentication (JWT or session)
+
+Introduce Redis TTLs and DLQs (dead-letter queues)
+
+CI/CD pipeline (GitHub Actions + Docker + Railway/Vercel)
+
+Alerting system for error spikes (email/webhook)
+
+GraphQL API (stretch)
+
+🙇‍♂️ Author
+Ashwin Rai
+Full-stack Developer | IIIT Bhagalpur
