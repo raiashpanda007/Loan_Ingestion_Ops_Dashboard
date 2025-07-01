@@ -55,7 +55,8 @@ export async function processLoan(job: Job) {
         amount: parsedData.data.amount,
         income: parsedData.data.income,
         creditScore: parsedData.data.creditScore,
-        purpose: parsedData.data.purpose
+        purpose: parsedData.data.purpose,
+        createdAt: new Date(),
     }
     await client.set(`accepted-loan:${loanId}`, JSON.stringify(loanData));
     await client.sadd('accepted-loans', `accepted-loan:${loanId}`);
@@ -78,6 +79,6 @@ async function storeFailedJob(
 ) {
     if (!jobId) return;
     const key = `failed-loans:${errorCode}:${jobId}`;
-    await client.set(key, JSON.stringify({ jobId, error: errorCode, data }));
+    await client.set(key, JSON.stringify({ jobId, error: errorCode, data:{...data,createdAt:new Date()} }));
     await client.sadd('failed-loans', key);
 }

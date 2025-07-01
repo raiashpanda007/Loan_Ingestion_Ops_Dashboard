@@ -59,10 +59,15 @@ cron.schedule('*/30 * * * * *', async () => {
           purpose:purpose,
           flagged: false,
           retried: false,
+          createdAt: new Date(),
           errors: {
-            create: [
+            connectOrCreate: [
               {
-                code: errorCode,
+                where: { code: errorCode },
+                create: {
+                  code: errorCode,
+                  createdAt: new Date(),
+                },
               },
             ],
           },

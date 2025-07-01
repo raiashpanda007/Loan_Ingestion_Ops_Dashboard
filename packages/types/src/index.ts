@@ -15,3 +15,20 @@ export const LoanRequestSchema = zod.object({
     purpose: zod.string().min(1, "Purpose is required"),
     // status: zod.enum(["APPROVED", "REJECTED", "PENDING"]).default("PENDING"),
 });
+
+
+
+export const ErrorLogFilterSchema = zod.object({
+  loanId:  zod.string().optional(),
+  errorId: zod.string().optional(),
+  email:   zod.string().email().optional(),
+  phone:   zod.string().optional(),
+  flagged: zod.enum(["true","false"]).optional(),
+  retried: zod.enum(["true","false"]).optional(),
+  from: zod.string()
+    .refine(s => !isNaN(Date.parse(s)), { message: "Invalid from date" })
+    .optional(),
+  to: zod.string()
+    .refine(s => !isNaN(Date.parse(s)), { message: "Invalid to date" })
+    .optional(),
+});
