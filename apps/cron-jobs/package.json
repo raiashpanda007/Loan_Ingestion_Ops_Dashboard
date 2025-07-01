@@ -1,0 +1,19 @@
+{
+  "name": "cron-jobs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tsbuild": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js ",
+    "dev": "node dist/index.js",
+    "start": "pnpm tsbuild && pnpm dev",
+    "build": "pnpm tsbuild && pnpm dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.25.5",
+    "node-cron": "^4.2.0"
+  }
+}

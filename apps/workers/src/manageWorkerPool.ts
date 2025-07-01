@@ -5,8 +5,8 @@ import {processLoan}  from './worker';
 
 const LOAN_QUEUE = queue.LOAN_QUEUE;
 const activeWorkers: Worker[] = [];
-const interval = 5000;
-const maxWorkers = 5;
+const interval = 1000;
+const maxWorkers = 10;
 
 export async function manageWorkerPool() {
   setInterval(async () => {

@@ -15,7 +15,7 @@ datasource db {
 
 model Loan {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  loanId      String  @unique
+  loanId      String  
   name        String
   age         Int
   email       String
@@ -39,11 +39,19 @@ model FailedLoan {
   income      Float
   creditScore Int
   purpose     String
-  errors      String[]
+  errors      LoanError[] @relation("LoanToErrors")
   flagged     Boolean   @default(false)
   flaggedNote String?
   failedAt    DateTime  @default(now())
   retried     Boolean   @default(false)
 }
 
+
+model LoanError {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  failedLoanId String     @db.ObjectId
+  failedLoan   FailedLoan @relation("LoanToErrors", fields: [failedLoanId], references: [id])
+  code         String    @unique
+  createdAt    DateTime   @default(now())
+}
 
