@@ -1,8 +1,9 @@
 import { Router } from "express";
 import LoansRequestController from "../controllers/LoansRequest.controller";
 import LoansErrorsController from "../controllers/LoansErrors.controller";
+import incomingRequestsMiddleware from "../middlewares/incoming_requests.middleware";
 const router: Router = Router();
-router.post('/request', LoansRequestController);
+router.post('/request',incomingRequestsMiddleware, LoansRequestController);
 /**
  * @route   GET /api/loans/errors
  * @desc    Fetch filtered loan error logs
@@ -14,8 +15,9 @@ router.post('/request', LoansRequestController);
  *          from?: string (ISO date)
  *          to?: string (ISO date)
  *          errorId?: string
- * @access  Public (you can restrict later with auth middleware)
+ * @access  Public 
  */
 router.get("/errors", LoansErrorsController);
+router.get("/geterros", LoansErrorsController);
 
 export default router;

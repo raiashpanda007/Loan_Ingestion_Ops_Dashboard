@@ -16,6 +16,13 @@ export async function processLoan(job: Job) {
         });
         await storeFailedJob(job.id, errorCode, data);
         await client.incr('failed_count');
+        const getCount = await client.get('failed_count');
+        broadcast('count:failed', {    
+            message: 'Failed count updated',
+            count: getCount ? parseInt(getCount, 10) : 0,
+            jobId: job.id,
+        });
+        console.error(`Job ${job.id} failed due to invalid data format`, parsedData.error);
         return;
     }
 
@@ -30,6 +37,12 @@ export async function processLoan(job: Job) {
         });
         await storeFailedJob(job.id, errorCode, data);
         await client.incr('failed_count');
+        const getCount = await client.get('failed_count');
+        broadcast('count:failed', {
+            message: 'Failed count updated',
+            count: getCount ? parseInt(getCount, 10) : 0,      
+            jobId: job.id,
+        });
         return;
     }
 
@@ -42,6 +55,12 @@ export async function processLoan(job: Job) {
         });
         await storeFailedJob(job.id, errorCode, data);
         await client.incr('failed_count');
+        const getCount = await client.get('failed_count');
+        broadcast('count:failed', {
+            message: 'Failed count updated',
+            count: getCount ? parseInt(getCount, 10) : 0,   
+            jobId: job.id,
+        });
         return;
     }
 
@@ -61,7 +80,6 @@ export async function processLoan(job: Job) {
     await client.set(`accepted-loan:${loanId}`, JSON.stringify(loanData));
     await client.sadd('accepted-loans', `accepted-loan:${loanId}`);
 
-
     broadcast('success', {
         message: 'Loan accepted',
         jobId: job.id,
@@ -69,7 +87,18 @@ export async function processLoan(job: Job) {
     });
 
     console.log(`Loan request for ${application.name} with ID ${loanId} processed successfully`);
+    
+    // INCREMENT AND BROADCAST - THIS WAS MISSING THE BROADCAST!
     await client.incr('processed_count');
+    const getProcessedCount = await client.get('processed_count');
+    
+    // 🔥 ADD THIS BROADCAST - This was missing!
+    broadcast('count:processed', {
+        message: 'Processed count updated',
+        count: getProcessedCount ? parseInt(getProcessedCount, 10) : 0,
+        jobId: job.id,
+        loanId,
+    });
 }
 
 async function storeFailedJob(
@@ -79,6 +108,6 @@ async function storeFailedJob(
 ) {
     if (!jobId) return;
     const key = `failed-loans:${errorCode}:${jobId}`;
-    await client.set(key, JSON.stringify({ jobId, error: errorCode, data:{...data,createdAt:new Date()} }));
+    await client.set(key, JSON.stringify({ jobId, error: errorCode, data: { ...data, createdAt: new Date() } }));
     await client.sadd('failed-loans', key);
 }
